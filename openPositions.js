@@ -10,7 +10,6 @@
 let enabled=true;
 let colorsInterval;
 let orderInterval;
-let checkExistPositions;
 let orderClass='net-pl';
 let orderAsc=true;
 
@@ -22,7 +21,6 @@ function runAll() {
   extraMenu();
   columnOrderClick();
   setStyles();
-  console.log("gonna execute shortcuts");
   shortCuts();
 }
 
@@ -96,30 +94,31 @@ function extraMenu() {
   let checkExist = setInterval(function() {
     if ($('ul#navigation li').length) {
       clearInterval(checkExist);
-      $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
-//       $('div#trading-group').change(function() {
-//         console.log("a#openPositionsNav.click");
-//         setStyles();
-//       });
-      $('a#extrasNav').click(function() {
-        enabled=!enabled;
-        if (enabled) {
-          runAll();
-        } else {
-          clearInterval(orderInterval);
-          clearInterval(colorsInterval);
-          $("#openPositionsRepeater .position").each(function(i, el) {
-            color(el,'');
-          });
-        }
+      $('#openPositionsNav').click(function(){
+          setStyles();
       });
+      if ($('#extrasNav').length===0) {
+          $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
+          $('a#extrasNav').click(function() {
+              enabled=!enabled;
+              if (enabled) {
+                  runAll();
+              } else {
+                  clearInterval(orderInterval);
+                  clearInterval(colorsInterval);
+                  $("#openPositionsRepeater .position").each(function(i, el) {
+                      color(el,'');
+                  });
+              }
+          });
+      }
     }
   }, 250);
 }
 
 /* Narrowing line height */
 function setStyles() {
-  checkExistPositions = setInterval(function() {
+    let checkExistPositions = setInterval(function() {
     if ($('#openPositions div.position').length) {
       clearInterval(checkExistPositions);
       $('div.position').css({
@@ -155,9 +154,19 @@ function shortCuts() {
   //       switch (e.which) {
   //         case 37: //left
   //             console.log("zoom Out");
-  //             $('div#chartSize #zoomOut').click(); break;  //todo dont work
+  //             let next=$('.ciq-active').next();
+  //             console.log("zoom Out 1 next="+next);
+  //             $(next).click();
+  //             console.log("zoom Out 2");
+  //             // else
+  //             //$('.ciq-active').removeClass('ciq-active');
+  //             console.log("zoom Out 2");
+  //             // $(next).class('cq-item.ciq-active');
+  //             // console.log("zoom Out 3");
+  //             // $('div#chartSize #zoomOut').click(); break;  //todo dont work
   //         case 39: //right
   //             console.log("zoom In");
+  //             $$('#ChartResolutionMenu').click(); //todo dont work
   //             $('div#chartSize #zoomIn').click(); break;  //todo dont work
   //       }
   //     }
