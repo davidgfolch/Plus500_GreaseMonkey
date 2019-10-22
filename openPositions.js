@@ -7,6 +7,7 @@ let checkExistPositions;
 let orderClass='net-pl';
 let orderAsc=true;
 
+console.log("Plus 500 greaseMonkey script version 1.0.0");
 runAll();
 
 function runAll() {
