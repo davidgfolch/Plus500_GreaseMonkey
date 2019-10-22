@@ -88,7 +88,7 @@ function extraMenu() {
     if ($('ul#navigation li').length) {
       clearInterval(checkExist);
       $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
-      $('a#openPositionsNav').click(function() {
+      $('div#trading-group').change(function() {
         console.log("a#openPositionsNav.click");
         setStyles();
       });
