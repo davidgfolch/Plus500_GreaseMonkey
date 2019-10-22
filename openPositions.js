@@ -6,17 +6,15 @@ var orderInterval;
 var orderClass='net-pl';
 var orderAsc=true;
 
-order();
-colors();
-extraMenu();
-columnOrderClick();
+runAll();
 
-var checkExistPositions = setInterval(function() {
-  if ($('#openPositions div.position').length) {
-    //clearInterval(checkExistPositions);
-    setStyles();
-  }
-}, 1000);
+function runAll() {
+  order();
+  colors();
+  extraMenu();
+  columnOrderClick();
+  setStyles();
+}
 
 /* Order table by columns on click */
 function columnOrderClick() {
@@ -92,8 +90,7 @@ function extraMenu() {
       $('a#extrasNav').click(function() {
         enabled=!enabled;
         if (enabled) {
-          order();
-          colors();        
+          runAll();
         } else {
           clearInterval(orderInterval);
           clearInterval(colorsInterval);
@@ -108,22 +105,27 @@ function extraMenu() {
 
 /* Narrowing line height */
 function setStyles() {
-  $('div.position').css({
-      "font-weight": "normal",
-      "padding": "0px 0px 0px 0px"
-  });
-  $('div.position div.type span').css({
-      "display": "none"
-  });
-  $('div.limit-stop').css({
-      "display": "none"
-  });
-  $('div.position div.actions button').css({
-      "display": "none",
-      "visibility": "hidden",
-      "height": "0px"
-  });
-  $('.open-time :nth-child(2)').css({
-      "display": "none"
-  });
+  var checkExistPositions = setInterval(function() {
+    if ($('#openPositions div.position').length) {
+      //clearInterval(checkExistPositions);
+      $('div.position').css({
+          "font-weight": "normal",
+          "padding": "0px 0px 0px 0px"
+      });
+      $('div.position div.type span').css({
+          "display": "none"
+      });
+      $('div.limit-stop').css({
+          "display": "none"
+      });
+      $('div.position div.actions button').css({
+          "display": "none",
+          "visibility": "hidden",
+          "height": "0px"
+      });
+      $('.open-time :nth-child(2)').css({
+          "display": "none"
+      });
+    }
+  }, 1000);
 }
