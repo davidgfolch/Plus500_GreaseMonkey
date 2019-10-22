@@ -69,9 +69,9 @@ function colors() {
           color(el,'');
         } else {
           if (newValue>oldValue) {
-            color(el,'#330000aa');
+            color(el,'#9900aa');
           } else {
-            color(el,'#003300aa');
+            color(el,'#0099aa');
           }
         }
       }
