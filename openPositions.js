@@ -11,12 +11,12 @@ colors();
 extraMenu();
 columnOrderClick();
 
-var checkExist = setInterval(function() {
+var checkExistPositions = setInterval(function() {
   if ($('#openPositions div.position').length) {
-    clearInterval(checkExist);
+    //clearInterval(checkExistPositions);
     setStyles();
   }
-}, 100);
+}, 1000);
 
 /* Order table by columns on click */
 function columnOrderClick() {
