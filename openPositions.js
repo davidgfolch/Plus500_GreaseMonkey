@@ -90,6 +90,7 @@ function extraMenu() {
       $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
       $('a#extrasNav').click(function() {
         $('a#openPositionsNav').click(function() {
+          console.log("a#openPositionsNav.click");
           setStyles();
         });
       });
@@ -133,5 +134,5 @@ function setStyles() {
           "display": "none"
       });
     }
-  }, 200);
+  }, 300);
 }
