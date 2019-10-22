@@ -139,25 +139,25 @@ function setStyles() {
 
 function shortCuts() {
   console.log("shortCuts");
-  document.getElementById('html').onkeydown = function (e) {
-    console.log("e = e || window.event;");
-    e = e || window.event;
-    let keyCode = e.keyCode || e.which,
-        arrow = {left: 37, up: 38, right: 39, down: 40 };
-    console.log("keycode/arrow def");
-
-    if (e.ctrlKey) {
-      console.log("ctrlKey");
-      switch (keyCode) {
-        case arrow.left:
-          console.log("ctrl+left");
-          $('#zoomIn').click();
-          break;
-        case arrow.right:
-          console.log("ctrl+right");
-          $('#zoomOut').click();
-          break;
-      }
-    }
-  };
+  // document.getElementById('html').onkeydown = function (e) {
+  //   console.log("e = e || window.event;");
+  //   e = e || window.event;
+  //   let keyCode = e.keyCode || e.which,
+  //       arrow = {left: 37, up: 38, right: 39, down: 40 };
+  //   console.log("keycode/arrow def");
+  //
+  //   if (e.ctrlKey) {
+  //     console.log("ctrlKey");
+  //     switch (keyCode) {
+  //       case arrow.left:
+  //         console.log("ctrl+left");
+  //         $('#zoomIn').click();
+  //         break;
+  //       case arrow.right:
+  //         console.log("ctrl+right");
+  //         $('#zoomOut').click();
+  //         break;
+  //     }
+  //   }
+  // };
 }
