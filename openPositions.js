@@ -31,6 +31,7 @@ function columnOrderClick() {
     if ($(divHeader).length) {
       clearInterval(checkExist);
       $(divHeader).click(function() {
+        console.log("click!");
         let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
@@ -66,18 +67,19 @@ function colors() {
     //console.log("Pluss 500 position highlighter run time out ----------------------------------------------------------------");
     $("#openPositionsRepeater .position").each(function(i, el) {
       //console.log("checkPrices, forEach "+elmId);
-      let newValue=num($(el).find('div.net-pl').text());
+      let netPl=$(el).find('div.net-pl');
+      let newValue=num($(netPl).text());
       if (typeof netValues[i] != 'undefined') {
         let oldValue=netValues[i];
         //console.log("oldValue="+oldValue);
         //console.log("newValue="+newValue);
         if (newValue===oldValue) {
-          color(el,'');
+          color(netPl,'');
         } else {
           if (newValue>oldValue) {
-            color(el,'#330000aa');
+            color(netPl,'#330000aa');
           } else {
-            color(el,'#003300aa');
+            color(netPl,'#005500aa');
           }
         }
       }
@@ -95,7 +97,7 @@ function extraMenu() {
     if ($('ul#navigation li').length) {
       clearInterval(checkExist);
       $('#openPositionsNav').click(function(){
-          setStyles();
+        runAll();
       });
       if ($('#extrasNav').length===0) {
           $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
