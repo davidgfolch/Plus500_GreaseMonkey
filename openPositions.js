@@ -15,6 +15,7 @@ function runAll() {
   extraMenu();
   columnOrderClick();
   setStyles();
+  console.log("gonna execute shortcuts");
   shortCuts();
 }
 
