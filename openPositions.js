@@ -1,31 +1,39 @@
+// ==UserScript==
+// @name     Plus500 position order
+// @version  1
+// @grant    none
+// @require  https://code.jquery.com/jquery-3.4.1.js
+// ==/UserScript==
+
 /* GreaseMonkey for Plus500/open-positions */
 
-var enabled=true;
-var colorsInterval;
-var orderInterval;
-var checkExistPositions;
-var orderClass='net-pl';
-var orderAsc=true;
+let enabled=true;
+let colorsInterval;
+let orderInterval;
+let checkExistPositions;
+let orderClass='net-pl';
+let orderAsc=true;
 
 runAll();
 
 function runAll() {
-  alert("Plus 500 greaseMonkey script version 1.0.0");
   order();
   colors();
   extraMenu();
   columnOrderClick();
   setStyles();
+  console.log("gonna execute shortcuts");
+  shortCuts();
 }
 
 const divHeader='#openPositions .section-table-head div div';
 /* Order table by columns on click */
 function columnOrderClick() {
-  var checkExist = setInterval(function() {
+  let checkExist = setInterval(function() {
     if ($(divHeader).length) {
       clearInterval(checkExist);
       $(divHeader).click(function() {
-        var newClass=$(this).attr('class');
+        let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
       });
@@ -35,43 +43,43 @@ function columnOrderClick() {
 
 function order() {
   orderInterval = window.setInterval(function(){
-    var alphabeticallyOrderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
-      var value1=$(a).find('div.'+orderClass).text();
-      var value2=$(b).find('div.'+orderClass).text();
+    let alphabeticallyOrderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
+      let value1=$(a).find('div.'+orderClass).text();
+      let value2=$(b).find('div.'+orderClass).text();
       if (num(value2)) return orderAsc?num(value2)>num(value1):num(value1)>num(value2);
       else return orderAsc?value2>value1:value1>value2;
     });
-    $("#openPositionsRepeater").html(alphabeticallyOrderedDivs);    
+    $("#openPositionsRepeater").html(alphabeticallyOrderedDivs);
   }, 500);
 }
 
 function num(x) {
   //console.log(x);
-  var text=x.replace(/[^0-9,-]+/g,"").replace(/,/g, '.').split(" ")[0].trim();
+  let text=x.replace(/[^0-9,-]+/g,"").replace(/,/g, '.').split(" ")[0].trim();
   //console.log("text="+x);
   //console.log("number="+parseFloat(text));
   return parseFloat(text);
 }
 
-var netValues=[];
+let netValues=[];
 
 function colors() {
   colorsInterval = window.setInterval(function(){
     //console.log("Pluss 500 position highlighter run time out ----------------------------------------------------------------");
     $("#openPositionsRepeater .position").each(function(i, el) {
       //console.log("checkPrices, forEach "+elmId);
-      var newValue=num($(el).find('div.net-pl').text());
+      let newValue=num($(el).find('div.net-pl').text());
       if (typeof netValues[i] != 'undefined') {
-        var oldValue=netValues[i];
+        let oldValue=netValues[i];
         //console.log("oldValue="+oldValue);
         //console.log("newValue="+newValue);
         if (newValue===oldValue) {
           color(el,'');
         } else {
           if (newValue>oldValue) {
-            color(el,'#9900aa');
+            color(el,'#330000aa');
           } else {
-            color(el,'#0099aa');
+            color(el,'#003300aa');
           }
         }
       }
@@ -85,7 +93,7 @@ function color(el,color) {
 }
 
 function extraMenu() {
-  var checkExist = setInterval(function() {
+  let checkExist = setInterval(function() {
     if ($('ul#navigation li').length) {
       clearInterval(checkExist);
       $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
@@ -115,23 +123,44 @@ function setStyles() {
     if ($('#openPositions div.position').length) {
       clearInterval(checkExistPositions);
       $('div.position').css({
-          "font-weight": "normal",
-          "padding": "0px 0px 0px 0px"
+        "font-weight": "normal",
+        "padding": "0px 0px 0px 0px"
       });
       $('div.position div.type span').css({
-          "display": "none"
+        "display": "none"
       });
       $('div.limit-stop').css({
-          "display": "none"
+        "display": "none"
       });
       $('div.position div.actions button').css({
-          "display": "none",
-          "visibility": "hidden",
-          "height": "0px"
+        "display": "none",
+        "visibility": "hidden",
+        "height": "0px"
       });
       $('.open-time :nth-child(2)').css({
-          "display": "none"
+        "display": "none"
       });
     }
   }, 300);
+}
+
+function shortCuts() {
+  // console.log("shortCuts");
+  // $(function() {
+  //   // Handler for $('document').ready() called.
+  //   $(document).keydown(function (e) {
+  //     console.log("e.which="+e.which);
+  //     console.log("e.ctrlKey="+e.ctrlKey);
+  //     if (e.ctrlKey) {
+  //       switch (e.which) {
+  //         case 37: //left
+  //             console.log("zoom Out");
+  //             $('div#chartSize #zoomOut').click(); break;  //todo dont work
+  //         case 39: //right
+  //             console.log("zoom In");
+  //             $('div#chartSize #zoomIn').click(); break;  //todo dont work
+  //       }
+  //     }
+  //   });
+  // });
 }
