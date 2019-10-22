@@ -3,6 +3,7 @@
 var enabled=true;
 var colorsInterval;
 var orderInterval;
+var checkExistPositions;
 var orderClass='net-pl';
 var orderAsc=true;
 
@@ -105,9 +106,9 @@ function extraMenu() {
 
 /* Narrowing line height */
 function setStyles() {
-  var checkExistPositions = setInterval(function() {
+  checkExistPositions = setInterval(function() {
     if ($('#openPositions div.position').length) {
-      //clearInterval(checkExistPositions);
+      clearInterval(checkExistPositions);
       $('div.position').css({
           "font-weight": "normal",
           "padding": "0px 0px 0px 0px"
@@ -127,5 +128,5 @@ function setStyles() {
           "display": "none"
       });
     }
-  }, 1000);
+  }, 200);
 }
