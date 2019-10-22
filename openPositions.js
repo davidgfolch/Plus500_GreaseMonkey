@@ -137,7 +137,7 @@ function setStyles() {
 }
 
 function shortCuts() {
-  document.getElementById('element').onkeydown = function (e) {
+  document.getElementById('document').onkeydown = function (e) {
     e = e || window.event;
     let keyCode = e.keyCode || e.which,
         arrow = {left: 37, up: 38, right: 39, down: 40 };
