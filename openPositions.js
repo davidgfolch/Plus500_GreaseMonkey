@@ -36,9 +36,9 @@ function columnOrderClick() {
 
 function order() {
   orderInterval = window.setInterval(function(){
-    var alphabeticallyOrderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
-      var value1=$(a).find('div.'+orderClass).text();
-      var value2=$(b).find('div.'+orderClass).text();
+    let alphabeticallyOrderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
+      let value1=$(a).find('div.'+orderClass).text();
+      let value2=$(b).find('div.'+orderClass).text();
       if (num(value2)) return orderAsc?num(value2)>num(value1):num(value1)>num(value2);
       else return orderAsc?value2>value1:value1>value2;
     });
@@ -54,7 +54,7 @@ function num(x) {
   return parseFloat(text);
 }
 
-var netValues=[];
+let netValues=[];
 
 function colors() {
   colorsInterval = window.setInterval(function(){
