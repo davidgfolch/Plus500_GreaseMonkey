@@ -138,7 +138,7 @@ function setStyles() {
 
 function shortCuts() {
   console.log("shortCuts");
-  document.getElementById('document').onkeydown = function (e) {
+  document.getElementById('html').onkeydown = function (e) {
     console.log("e = e || window.event;");
     e = e || window.event;
     let keyCode = e.keyCode || e.which,
