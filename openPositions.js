@@ -39,7 +39,7 @@ function order() {
       else return orderAsc?value2>value1:value1>value2;
     });
     $("#openPositionsRepeater").html(alphabeticallyOrderedDivs);    
-  }, 1000);
+  }, 500);
 }
 
 function num(x) {
