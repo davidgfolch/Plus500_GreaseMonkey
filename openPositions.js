@@ -7,10 +7,10 @@ var checkExistPositions;
 var orderClass='net-pl';
 var orderAsc=true;
 
-alert("Plus 500 greaseMonkey script version 1.0.0");
 runAll();
 
 function runAll() {
+  alert("Plus 500 greaseMonkey script version 1.0.0");
   order();
   colors();
   extraMenu();
