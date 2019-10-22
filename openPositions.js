@@ -31,7 +31,6 @@ function columnOrderClick() {
     if ($(divHeader).length) {
       clearInterval(checkExist);
       $(divHeader).click(function() {
-        console.log("click!");
         let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
@@ -53,10 +52,7 @@ function order() {
 }
 
 function num(x) {
-  //console.log(x);
   let text=x.replace(/[^0-9,-]+/g,"").replace(/,/g, '.').split(" ")[0].trim();
-  //console.log("text="+x);
-  //console.log("number="+parseFloat(text));
   return parseFloat(text);
 }
 
@@ -64,15 +60,11 @@ let netValues=[];
 
 function colors() {
   colorsInterval = window.setInterval(function(){
-    //console.log("Pluss 500 position highlighter run time out ----------------------------------------------------------------");
     $("#openPositionsRepeater .position").each(function(i, el) {
-      //console.log("checkPrices, forEach "+elmId);
       let netPl=$(el).find('div.net-pl');
       let newValue=num($(netPl).text());
       if (typeof netValues[i] != 'undefined') {
         let oldValue=netValues[i];
-        //console.log("oldValue="+oldValue);
-        //console.log("newValue="+newValue);
         if (newValue===oldValue) {
           color(netPl,'');
         } else {
