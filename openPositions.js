@@ -88,10 +88,10 @@ function extraMenu() {
     if ($('ul#navigation li').length) {
       clearInterval(checkExist);
       $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
-      $('div#trading-group').change(function() {
-        console.log("a#openPositionsNav.click");
-        setStyles();
-      });
+//       $('div#trading-group').change(function() {
+//         console.log("a#openPositionsNav.click");
+//         setStyles();
+//       });
       $('a#extrasNav').click(function() {
         enabled=!enabled;
         if (enabled) {
