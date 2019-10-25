@@ -5,11 +5,12 @@
 // @require  https://code.jquery.com/jquery-3.4.1.js
 // ==/UserScript==
 
-/* GreaseMonkey for Plus500/open-positions */
+/* GreaseMonkey for https://app.plus500.com/open-positions */
 
 let enabled=true;
 let colorsInterval;
 let orderInterval;
+let reorder=true;
 let orderClass='net-pl';
 let orderAsc=true;
 
@@ -34,6 +35,7 @@ function columnOrderClick() {
         let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
+        reorder=true;
       });
     }
   }, 250);
@@ -41,14 +43,20 @@ function columnOrderClick() {
 
 function order() {
   orderInterval = window.setInterval(function(){
-    let alphabeticallyOrderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
-      let value1=$(a).find('div.'+orderClass).text();
-      let value2=$(b).find('div.'+orderClass).text();
-      if (num(value2)) return orderAsc?num(value2)>num(value1):num(value1)>num(value2);
-      else return orderAsc?value2>value1:value1>value2;
-    });
-    $("#openPositionsRepeater").html(alphabeticallyOrderedDivs);
-  }, 500);
+    if (reorder) {
+      reorder=false;
+      let orderedDivs = $("#openPositionsRepeater .position").sort(function (a, b) {
+        let value1=$(a).find('div.'+orderClass).text();
+        let value2=$(b).find('div.'+orderClass).text();
+        if (num(value2)) return orderAsc?num(value2)>num(value1):num(value1)>num(value2);
+        else return orderAsc?value2>value1:value1>value2;
+      });
+      $("#openPositionsRepeater").html(orderedDivs);
+      $("#openPositionsRepeater .position").each(function(i, el) {
+        netValues[i]=num($(el).find('div.net-pl').text());
+      });
+    }
+  }, 1000);
 }
 
 function num(x) {
@@ -57,31 +65,48 @@ function num(x) {
 }
 
 let netValues=[];
+let netValuesAverage=[];
 
 function colors() {
   colorsInterval = window.setInterval(function(){
     $("#openPositionsRepeater .position").each(function(i, el) {
       let netPl=$(el).find('div.net-pl');
-      let newValue=num($(netPl).text());
+      let newValue=float2int(num($(netPl).text()));
       if (typeof netValues[i] != 'undefined') {
+        let type=$(el).find('div.type');
         let oldValue=netValues[i];
-        if (newValue===oldValue) {
-          color(netPl,'');
-        } else {
-          if (newValue>oldValue) {
-            color(netPl,'#330000aa');
-          } else {
-            color(netPl,'#005500aa');
-          }
+        if (netValuesAverage[i].length>10) {
+          netValuesAverage[i]=netValuesAverage[i].splice(1);
         }
-      }
+        netValuesAverage[i].push(newValue);
+        let avValue=float2int(netValuesAverage[i].reduce(function(a, b) { return a + b; }) / netValuesAverage[i].length);
+        if (avValue===newValue) {
+          color(type,'','');
+        } else {
+          if (newValue>avValue) {
+            color(type,'#aaffaa','#005500');
+          } else {
+            color(type,'#ffaaaa','#550000');
+          }
+          reorder=true;
+        }
+      } else netValuesAverage[i]=[newValue];
       netValues[i]=newValue;
     });
   }, 400);
 }
 
-function color(el,color) {
-  $(el).css('background', color);
+function color(el,color,bg) {
+  //$(el).css({"color":color,"background":bg});
+  var rgbaCol = 'rgba(' + parseInt(color.slice(-6,-4),16)
+      + ',' + parseInt(color.slice(-4,-2),16)
+      + ',' + parseInt(color.slice(-2),16)
+      +',0.3)';
+  $(el).css({"color":color,"background":bg==''?bg:rgbaCol});
+}
+
+function float2int(value) {
+  return value | 0;
 }
 
 function extraMenu() {
@@ -92,19 +117,19 @@ function extraMenu() {
         runAll();
       });
       if ($('#extrasNav').length===0) {
-          $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
-          $('a#extrasNav').click(function() {
-              enabled=!enabled;
-              if (enabled) {
-                  runAll();
-              } else {
-                  clearInterval(orderInterval);
-                  clearInterval(colorsInterval);
-                  $("#openPositionsRepeater .position").each(function(i, el) {
-                      color(el,'');
-                  });
-              }
-          });
+        $('ul#navigation').append('<li><a id="extrasNav" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>');
+        $('a#extrasNav').click(function() {
+          enabled=!enabled;
+          if (enabled) {
+            runAll();
+          } else {
+            clearInterval(orderInterval);
+            clearInterval(colorsInterval);
+            $("#openPositionsRepeater .position").each(function(i, el) {
+              color(el,'');
+            });
+          }
+        });
       }
     }
   }, 250);
@@ -112,7 +137,7 @@ function extraMenu() {
 
 /* Narrowing line height */
 function setStyles() {
-    let checkExistPositions = setInterval(function() {
+  let checkExistPositions = setInterval(function() {
     if ($('#openPositions div.position').length) {
       clearInterval(checkExistPositions);
       $('div.position').css({
@@ -130,6 +155,14 @@ function setStyles() {
         "visibility": "hidden",
         "height": "0px"
       });
+      // $('#openPositionsRepeater .position .edit-position').each(function(i, el) {
+      //   console.log("moving... e"+el);
+      //   let parent=$(el).parent();
+      //   console.log("parent... e"+$(parent));
+      //   let first=$(parent).find('div.type');
+      //   console.log("first... e"+$(first));
+      //   first.prepend($(el).remove());
+      // });
       $('.open-time :nth-child(2)').css({
         "display": "none"
       });
