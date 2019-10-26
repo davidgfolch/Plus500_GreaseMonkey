@@ -8,61 +8,79 @@
 /* GreaseMonkey for https://app.plus500.com/open-positions */
 
 let enabled=true;
-let colorsInterval;
+let colorsIntervalId=0;
 let colorsTimeout=500;
-let orderInterval;
+let sortIntervalId;
 let reorderRows=true;
 let orderClass='net-pl';
 let orderAsc=true;
+let sortRunning=false;
 
 let divPositions="#openPositionsRepeater";
 let divPosition=divPositions+" .position";
 let divNet="div.net-pl";
-let maxNetValueAverageItems=60000*10/colorsTimeout; //remembers 10 minutes of data
 
-runAll();
+let colorsRunning=false;
+let maxNetValueAverageItems=60000*5/colorsTimeout; //remembers 5 minutes of data
+let netValues=[];
+let netValuesAverage=[];
+let tooltipRow=-1;
 
-function runAll() {
-    init();
-    order();
-    colors();
-    extraMenu();
-    columnOrderClick();
-    shortCuts();
-}
+let navigation='ul#navigation';
+let myMenuId='extrasNav';
+let myMenuSel='#'+myMenuId;
+let myMenuHtml='<li><a id="'+myMenuId+'" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>';
+
+init();
 
 const divHeader='#openPositions .section-table-head div div';
 /* Order table by columns on click */
 function columnOrderClick() {
-    let checkExist = setInterval(function() {
-        if ($(divHeader).length) {
-            clearInterval(checkExist);
-            $(divHeader).click(function() {
-                let newClass=$(this).attr('class');
-                if (newClass===orderClass) orderAsc=!orderAsc;
-                orderClass=newClass;
-                reorderRows=true;
-            });
-        }
-    }, 250);
+    $(divHeader).click(function() {
+        clearInterval(colorsTimeout);
+        sortRunning=true;
+        let newClass=$(this).attr('class');
+        if (newClass===orderClass) orderAsc=!orderAsc;
+        orderClass=newClass;
+        reorderRows=true;
+        netValues=[];
+        netValuesAverage=[];
+        colorsRunning=false;
+        sort();
+    });
 }
 
-function order() {
-    orderInterval = window.setInterval(function(){
-        if (reorderRows) {
-            reorderRows=false;
-            let orderedDivs = $(divPosition).sort(function (a, b) {
-                let value1=$(a).find('div.'+orderClass).text();
-                let value2=$(b).find('div.'+orderClass).text();
-                if (num(value2)) return orderAsc?num(value2)>num(value1):num(value1)>num(value2);
-                else return orderAsc?value2>value1:value1>value2;
+function sortSetInterval() {
+    sortIntervalId = window.setInterval(sort, 500);
+}
+function sort() {
+    console.log("sort");
+    sortRunning=false;
+    if (reorderRows && !colorsRunning) {
+        console.log("sort inside");
+        sortRunning=true;
+        reorderRows=false;
+        let orderedDivs = $(divPosition).sort(function (a, b) {
+            let value1 = $(a).find('div.' + orderClass).text();
+            let value2 = $(b).find('div.' + orderClass).text();
+            if (num(value2)) return orderAsc ? num(value2) > num(value1) : num(value1) > num(value2);
+            else return orderAsc ? value2 > value1 : value1 > value2;
+        });
+        $(divPositions).html(orderedDivs);
+        let newArr = netValuesAverage.slice();
+        $(divPositions + ' .position').each(function (divIdx, divElm) {
+            console.log("reorder net netValuesAverage - divPosition=" + divIdx + " divElmId=" + $(divElm).attr('id'));
+            netValuesAverage.sort(function (arrElm) {
+                if ($(divElm).attr('id') === arrElm.id) {
+                    console.log("reorder net netValuesAverage - setting new Array for id=" + arrElm.id);
+                    newArr[divIdx] = arrElm.clone();
+                }
             });
-            $(divPositions).html(orderedDivs);
-            // $(divPosition).each(function(i, el) {
-            //     netValues[i]=float2int(num($(el).find(divNet).text()));
-            // });
-        }
-    }, 1000);
+        });
+        netValuesAverage=newArr;
+        console.log("sort exit");
+        sortRunning=false;
+    }
 }
 
 function num(x) {
@@ -81,34 +99,57 @@ function float2int(value) {
     return value | 0;
 }
 
-let netValues=[];
-let netValuesAverage=[];
-
 function colors() {
-    colorsInterval = window.setInterval(function(){
+    colorsIntervalId = window.setInterval(function(){
+        colorsRunning=false;
+        if (sortRunning) return;
+        colorsRunning=true;
         $(divPosition).each(function(i, el) {
             let netPl=$(el).find(divNet);
             let newValue=float2int(num($(netPl).text()));
             if (typeof netValues[i] != 'undefined') {
                 let type=$(el).find('div.type');
-                if (netValuesAverage[i].length>maxNetValueAverageItems) {
-                    netValuesAverage[i]=netValuesAverage[i].splice(1);
-                }
-                netValuesAverage[i].push(newValue);
-                let avValue=avArray(netValuesAverage[i]);
+                let avArr=netValuesAverage[i].arr;
+                if (avArr.length>maxNetValueAverageItems)
+                    avArr=avArr.shift();
+                avArr.push(newValue);
+                let avValue=avArray(avArr);
                 let oldValue=netValues[i];
-                // if ($(type).text().indexOf('EUR/USD')!==-1 || $(type).text().indexOf('US-TECH 100')!==-1) {
-                //     console.log($(type).text()+" av="+avValue+"\tvalues="+netValuesAverage[i]);
-                // }
+                $(type).html($(type).html().replace(/(<small [^>]+> \(av\..+\)<\/small>)?<\/strong>/g,'')
+                    +' <small id="averagePrices"> (av. '+avValue+' €)</small></strong>');
 
-                //$(type).text($(type).text().replace(/Comprar/g,'C').replace(/Vender/g,'V').replace(/ average=.*/g,'')+' average='+avValue);
-                $(type).html($(type).html().replace(/(<small> \(av\..+\)<\/small>)?<\/strong>/g,'')+' <small> (av. '+avValue+' €)</small></strong>');
+                $(type).mousemove(function(event) {
+                    drawTooltip(event,avArr.join(", "));  //todo when reorder, average list should be reordered too.  Or use a map for prices array to link to position id.
+                    tooltipRow=i;
+                });
+                if (i===tooltipRow)
+                    updateTooltip(avArr.join(", "));
+                $(type).mouseout(function() {
+                    removeTooltip();
+                    tooltipRow=-1;
+                });
                 setColor(type,avValue,newValue);
                 setColor(netPl,oldValue,newValue,true);
-            } else netValuesAverage[i]=[newValue];
+            } else netValuesAverage[i]={ id: $(el).attr("id"), arr: [newValue] };
             netValues[i]=newValue;
         });
+        colorsRunning=false;
     }, colorsTimeout);
+}
+
+function drawTooltip(e,html){
+    if ($('#tooltip').length) $('#tooltip').remove();
+    $('<div />',{'id': 'tooltip'})
+        .css({'position': 'absolute', 'left': e.pageX+10, 'top': e.pageY+10, 'background': 'rgba(100,100,100,0.5)', 'padding': '1em 1em 1em 1em', 'border': '1px solid white', 'display': 'inline-block', 'max-width': '50%'})
+        .html(html)
+        .appendTo('body');
+}
+function updateTooltip(html){
+    if ($('#tooltip').length)
+        $('#tooltip').html(html);
+}
+function removeTooltip(){
+    $('#tooltip').remove();
 }
 
 function setColor(el,oldValue,newValue,setReorderRows) {
@@ -122,45 +163,40 @@ function setColor(el,oldValue,newValue,setReorderRows) {
     else colorRed(el,strong?'0.6':'0.3');
 }
 function colorReset(el) {
-    $(el).css({"color":"","background":""});
+    $(el).css('background','');
 }
 function colorGreen(el,alpha) {
-    colorBgAlpha(el, '', '#005500', alpha);
+    colorBgAlpha(el,'#005500', alpha);
 }
 function colorRed(el, alpha) {
-    colorBgAlpha(el, '', '#ff0000', alpha);
+    colorBgAlpha(el,'#ff0000', alpha);
 }
-function colorBgAlpha(el, color, bg, alpha) {
-    let rgbaCol = 'rgba(' + parseInt(bg.slice(-6,-4),16)
-        + ',' + parseInt(bg.slice(-4,-2),16)
-        + ',' + parseInt(bg.slice(-2),16)
+function colorBgAlpha(el, bgColor, alpha) {
+    let rgbaCol = 'rgba(' + parseInt(bgColor.slice(-6,-4),16)
+        + ',' + parseInt(bgColor.slice(-4,-2),16)
+        + ',' + parseInt(bgColor.slice(-2),16)
         +','+alpha+')';
-    $(el).css({"color":color,"background":rgbaCol});
+    $(el).css('background',rgbaCol);
 }
-
-let navigation='ul#navigation';
-let myMenuId='extrasNav';
-let myMenuSel='#'+myMenuId;
-let myMenuHtml='<li><a id="'+myMenuId+'" class="navigation icon-bars" data-nav="Extras"><span data-nav="Extras" data-win-res="{textContent: \'strExtras\'}">Extras</span></a></li>';
 
 function extraMenu() {
     let checkExist = setInterval(function() {
         if ($(navigation+' li').length) {
             clearInterval(checkExist);
             $('#openPositionsNav').click(function(){
-                runAll();
+                init();
             });
             if ($(myMenuSel).length===0) {
                 $(navigation).append(myMenuHtml);
                 $(myMenuSel).click(function() {
                     enabled=!enabled;
                     if (enabled) {
-                        runAll();
+                        init();
                     } else {
-                        clearInterval(orderInterval);
-                        clearInterval(colorsInterval);
+                        clearInterval(sortIntervalId);
+                        clearInterval(colorsIntervalId);
                         $(divPosition).each(function(i, el) {
-                            colorBgAlpha(el,'');
+                            colorReset(el);
                         });
                     }
                 });
@@ -169,14 +205,22 @@ function extraMenu() {
     }, 250);
 }
 
-/* Narrowing line height */
+
 function init() {
-    let checkExistPositions = setInterval(function() {
-        if ($('#openPositions div.position').length) {
-            clearInterval(checkExistPositions);
+    let intervalId = setInterval(function() {
+        if ($(divPosition).length) {
+            clearInterval(intervalId);
+            console.log("init");
 
             //$('ChartResolutionMenu')
+            sort();
             setStyles();
+            colors();
+            extraMenu();
+            columnOrderClick();
+            shortCuts();
+            sortSetInterval();
+
 
             //move column
             // $(divPosition+' .edit-position').each(function(i, el) {
@@ -191,6 +235,7 @@ function init() {
     }, 300);
 }
 
+/* Narrowing line height */
 function setStyles() {
     $('div.position').css({
         "font-weight": "normal",
