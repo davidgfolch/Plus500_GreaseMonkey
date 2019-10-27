@@ -1,6 +1,11 @@
 # Plus500_GreaseMonkey
 GreaseMonkey scripts for Plus500
 
+- Open positions page:
+    - Sets background color (red/green) for net pl prices.
+    - Sets background color (red/green) for net pl prices with average (on position name).
+    - Sort positions by columns.
+
 ## Installation
 
 - Install GreaseMonkey (on firefox)

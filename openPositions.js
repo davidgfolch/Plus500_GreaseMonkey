@@ -43,8 +43,6 @@ function columnOrderClick() {
         let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
-        // netValues=[];
-        // netValuesAverage=[];
         reorderRows=true;
         sortRunning=true;
         colorsRunning=false;
@@ -91,11 +89,6 @@ function avArray(arr) {
     return float2int(arr.reduce(function(a, b) { return a + b; }) / arr.length);
 }
 function float2int(value) {
-    // let str=''+value;
-    // let cut=str.substring(0,str.indexOf('\.'));
-    // //console.log("value to string="+str+"\tcut="+cut);
-    // return parseInt(cut);
-    // //return Math.round(value);
     return value | 0;
 }
 
@@ -121,19 +114,18 @@ function colors() {
                 let avValue=avArray(avArr);
                 let oldValue=netValues[i];
 
-                let buySell=$(type).find('> span').text().substring(0,1);  //todo move buySell transform to initialization
-                let newAvPrice=' ('+buySell+') av. '+avValue+' €';
+                let newAvPrice=' (av. '+avValue+' €)';
                 let avPriceNode='<span style="font-size: x-small"> '+newAvPrice+'</span>';
                 let avPriceElm=$(type).find('strong > span');
                 if (!$(avPriceElm).length) $(type).find('strong').append(avPriceNode);
                 else $(avPriceElm).text(newAvPrice);
 
+                if (i===tooltipRow)
+                    updateTooltip(avArr.join(", "));
                 $(type).mousemove(function(event) {  //todo move to initialization
                     drawTooltip(event,avArr.join(", "));  //todo when reorder, average list should be reordered too.  Or use a map for prices array to link to position id.
                     tooltipRow=i;
                 });
-                if (i===tooltipRow)
-                    updateTooltip(avArr.join(", "));
                 $(type).mouseout(function() { //todo move to initialization
                     removeTooltip();
                     tooltipRow=-1;
@@ -220,9 +212,14 @@ function init() {
     let intervalId = setInterval(function() {
         if ($(divPosition).length) {
             clearInterval(intervalId);
-            //console.log("init");
-
             //$('ChartResolutionMenu')
+
+            $(divPosition).each(function(i, el) {
+                let type=$(el).find('div.type');
+                let buySell=$(type).find('> span').text().substring(0,1);
+                $(type).find('strong').prepend('<div style="float: left; margin: 0; padding 0; font-size: x-small">('+buySell+')</div>');
+            });
+
             sort();
             setStyles();
             colors();
