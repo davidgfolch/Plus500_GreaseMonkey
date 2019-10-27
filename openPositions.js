@@ -19,10 +19,11 @@ let sortRunning=false;
 let divPositions="#openPositionsRepeater";
 let divPosition=divPositions+" .position";
 let divNet="div.net-pl";
+let divTooltip='#tooltip';
 
 let colorsRunning=false;
 let maxNetValueAverageItems=60000*5/colorsTimeout; //remembers 5 minutes of data
-let netValues=[];
+let netValues=[];  //todo remove newValues & use netValuesAverage?
 let netValuesAverage=[];
 let tooltipRow=-1;
 
@@ -37,16 +38,19 @@ const divHeader='#openPositions .section-table-head div div';
 /* Order table by columns on click */
 function columnOrderClick() {
     $(divHeader).click(function() {
-        clearInterval(colorsTimeout);
-        sortRunning=true;
+        clearInterval(colorsIntervalId);
+        clearInterval(sortIntervalId);
         let newClass=$(this).attr('class');
         if (newClass===orderClass) orderAsc=!orderAsc;
         orderClass=newClass;
+        // netValues=[];
+        // netValuesAverage=[];
         reorderRows=true;
-        netValues=[];
-        netValuesAverage=[];
+        sortRunning=true;
         colorsRunning=false;
         sort();
+        sortSetInterval();
+        colors();
     });
 }
 
@@ -54,10 +58,8 @@ function sortSetInterval() {
     sortIntervalId = window.setInterval(sort, 500);
 }
 function sort() {
-    console.log("sort");
     sortRunning=false;
     if (reorderRows && !colorsRunning) {
-        console.log("sort inside");
         sortRunning=true;
         reorderRows=false;
         let orderedDivs = $(divPosition).sort(function (a, b) {
@@ -67,18 +69,16 @@ function sort() {
             else return orderAsc ? value2 > value1 : value1 > value2;
         });
         $(divPositions).html(orderedDivs);
-        let newArr = netValuesAverage.slice();
-        $(divPositions + ' .position').each(function (divIdx, divElm) {
-            console.log("reorder net netValuesAverage - divPosition=" + divIdx + " divElmId=" + $(divElm).attr('id'));
-            netValuesAverage.sort(function (arrElm) {
+        let newArr=[];
+        $(divPositions + ' .position').each(function (pos, divElm) {
+            netValuesAverage.forEach(function (arrElm) {
                 if ($(divElm).attr('id') === arrElm.id) {
-                    console.log("reorder net netValuesAverage - setting new Array for id=" + arrElm.id);
-                    newArr[divIdx] = arrElm.clone();
+                    newArr.push(arrElm);
                 }
             });
         });
         netValuesAverage=newArr;
-        console.log("sort exit");
+        netValues=netValuesAverage.map(function(x) { return x.arr[x.arr.length-1]});
         sortRunning=false;
     }
 }
@@ -104,10 +104,15 @@ function colors() {
         colorsRunning=false;
         if (sortRunning) return;
         colorsRunning=true;
+        //if list size changes reset averages (new or removed position)
+        if ($(divPosition).length!==netValues.length) { //todo insert or remove positions in arrays
+            netValues=[];
+            netValuesAverage=[];
+        }
         $(divPosition).each(function(i, el) {
             let netPl=$(el).find(divNet);
             let newValue=float2int(num($(netPl).text()));
-            if (typeof netValues[i] != 'undefined') {
+            if (typeof netValues[i] != 'undefined') { //row now found
                 let type=$(el).find('div.type');
                 let avArr=netValuesAverage[i].arr;
                 if (avArr.length>maxNetValueAverageItems)
@@ -115,16 +120,21 @@ function colors() {
                 avArr.push(newValue);
                 let avValue=avArray(avArr);
                 let oldValue=netValues[i];
-                $(type).html($(type).html().replace(/(<small [^>]+> \(av\..+\)<\/small>)?<\/strong>/g,'')
-                    +' <small id="averagePrices"> (av. '+avValue+' €)</small></strong>');
 
-                $(type).mousemove(function(event) {
+                let buySell=$(type).find('> span').text().substring(0,1);  //todo move buySell transform to initialization
+                let newAvPrice=' ('+buySell+') av. '+avValue+' €';
+                let avPriceNode='<span style="font-size: x-small"> '+newAvPrice+'</span>';
+                let avPriceElm=$(type).find('strong > span');
+                if (!$(avPriceElm).length) $(type).find('strong').append(avPriceNode);
+                else $(avPriceElm).text(newAvPrice);
+
+                $(type).mousemove(function(event) {  //todo move to initialization
                     drawTooltip(event,avArr.join(", "));  //todo when reorder, average list should be reordered too.  Or use a map for prices array to link to position id.
                     tooltipRow=i;
                 });
                 if (i===tooltipRow)
                     updateTooltip(avArr.join(", "));
-                $(type).mouseout(function() {
+                $(type).mouseout(function() { //todo move to initialization
                     removeTooltip();
                     tooltipRow=-1;
                 });
@@ -138,18 +148,18 @@ function colors() {
 }
 
 function drawTooltip(e,html){
-    if ($('#tooltip').length) $('#tooltip').remove();
+    if ($(divTooltip).length) $(divTooltip).remove();
     $('<div />',{'id': 'tooltip'})
-        .css({'position': 'absolute', 'left': e.pageX+10, 'top': e.pageY+10, 'background': 'rgba(100,100,100,0.5)', 'padding': '1em 1em 1em 1em', 'border': '1px solid white', 'display': 'inline-block', 'max-width': '50%'})
+        .css({'position': 'absolute', 'left': e.pageX+10, 'top': e.pageY+10, 'background': 'rgba(100,100,100,0.7)', 'font-size': 'x-small', 'padding': '1em 1em 1em 1em', 'border': '1px solid white', 'display': 'inline-block', 'max-width': '80%'})
         .html(html)
         .appendTo('body');
 }
 function updateTooltip(html){
-    if ($('#tooltip').length)
-        $('#tooltip').html(html);
+    if ($(divTooltip).length)
+        $(divTooltip).html(html);
 }
 function removeTooltip(){
-    $('#tooltip').remove();
+    $(divTooltip).remove();
 }
 
 function setColor(el,oldValue,newValue,setReorderRows) {
@@ -210,7 +220,7 @@ function init() {
     let intervalId = setInterval(function() {
         if ($(divPosition).length) {
             clearInterval(intervalId);
-            console.log("init");
+            //console.log("init");
 
             //$('ChartResolutionMenu')
             sort();
