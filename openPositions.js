@@ -7,9 +7,11 @@
 
 /* GreaseMonkey for https://app.plus500.com/open-positions */
 
+//todo after some running time, disappears last rows mouseover average info
+
 let enabled=true;
 let colorsIntervalId=0;
-let colorsTimeout=500;
+let colorsTimeout=1000;
 let sortIntervalId;
 let reorderRows=true;
 let orderClass='net-pl';
@@ -22,7 +24,9 @@ let divNet="div.net-pl";
 let divTooltip='#tooltip';
 
 let colorsRunning=false;
-let maxNetValueAverageItems=60000*5/colorsTimeout; //remembers 5 minutes of data
+let netValuesAverageMinutes=10;
+let maxNetValueAverageItems=60000*netValuesAverageMinutes/colorsTimeout; //remembers netValuesAverageMinutes minutes of data
+let tooltipTitle="<strong>Media aritm&eacute;tica de &uacute;ltimos "+netValuesAverageMinutes+" minutos: </strong>";
 let netValues=[];  //todo remove newValues & use netValuesAverage?
 let netValuesAverage=[];
 let tooltipRow=-1;
@@ -37,7 +41,7 @@ init();
 const divHeader='#openPositions .section-table-head div div';
 /* Order table by columns on click */
 function columnOrderClick() {
-    $(divHeader).click(function() {
+    $(divHeader).on("click", function() {
         clearInterval(colorsIntervalId);
         clearInterval(sortIntervalId);
         let newClass=$(this).attr('class');
@@ -114,21 +118,22 @@ function colors() {
                 let avValue=avArray(avArr);
                 let oldValue=netValues[i];
 
-                let newAvPrice=' (av. '+avValue+' €)';
-                let avPriceNode='<span style="font-size: x-small"> '+newAvPrice+'</span>';
+                let imgAverageSymbol='<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/9fa4039bbc2a0048c3a3c02e5fd24390cab0dc97"' +
+                    ' aria-hidden="true" style="vertical-align: -0.338ex; width:1.445ex; height:2.343ex" alt=""> = ';
+                let newAvPrice=''+imgAverageSymbol+' '+avValue+' €';
+                let avPriceNode='<span style="font-size: small; border: 1px solid gray; float: right; background-color: lightgray; color: black"> '+newAvPrice+'</span>';
                 let avPriceElm=$(type).find('strong > span');
                 if (!$(avPriceElm).length) $(type).find('strong').append(avPriceNode);
-                else $(avPriceElm).text(newAvPrice);
+                else $(avPriceElm).html(newAvPrice);
 
                 if (i===tooltipRow)
-                    updateTooltip(avArr.join(", "));
-                $(type).mousemove(function(event) {  //todo move to initialization
-                    drawTooltip(event,avArr.join(", "));  //todo when reorder, average list should be reordered too.  Or use a map for prices array to link to position id.
+                    updateTooltip( tooltipTitle+avArr.join(", "));
+                $(type).on("mousemove", function(event) {
+                    drawTooltip(event, tooltipTitle+avArr.join(", "));
                     tooltipRow=i;
                 });
-                $(type).mouseout(function() { //todo move to initialization
+                $(type).on("mouseout",function() {
                     removeTooltip();
-                    tooltipRow=-1;
                 });
                 setColor(type,avValue,newValue);
                 setColor(netPl,oldValue,newValue,true);
@@ -144,6 +149,9 @@ function drawTooltip(e,html){
     $('<div />',{'id': 'tooltip'})
         .css({'position': 'absolute', 'left': e.pageX+10, 'top': e.pageY+10, 'background': 'rgba(100,100,100,0.7)', 'font-size': 'x-small', 'padding': '1em 1em 1em 1em', 'border': '1px solid white', 'display': 'inline-block', 'max-width': '80%'})
         .html(html)
+        .on("mouseout", function() {
+            removeTooltip();
+        })
         .appendTo('body');
 }
 function updateTooltip(html){
@@ -152,6 +160,7 @@ function updateTooltip(html){
 }
 function removeTooltip(){
     $(divTooltip).remove();
+    tooltipRow=-1;
 }
 
 function setColor(el,oldValue,newValue,setReorderRows) {
@@ -185,12 +194,12 @@ function extraMenu() {
     let checkExist = setInterval(function() {
         if ($(navigation+' li').length) {
             clearInterval(checkExist);
-            $('#openPositionsNav').click(function(){
+            $('#openPositionsNav').on("click", function(){
                 init();
             });
             if ($(myMenuSel).length===0) {
                 $(navigation).append(myMenuHtml);
-                $(myMenuSel).click(function() {
+                $(myMenuSel).on("click",function() {
                     enabled=!enabled;
                     if (enabled) {
                         init();
@@ -214,12 +223,6 @@ function init() {
             clearInterval(intervalId);
             //$('ChartResolutionMenu')
 
-            $(divPosition).each(function(i, el) {
-                let type=$(el).find('div.type');
-                let buySell=$(type).find('> span').text().substring(0,1);
-                $(type).find('strong').prepend('<div style="float: left; margin: 0; padding 0; font-size: x-small">('+buySell+')</div>');
-            });
-
             sort();
             setStyles();
             colors();
@@ -228,6 +231,16 @@ function init() {
             shortCuts();
             sortSetInterval();
 
+            $(divPosition).each(function(i, el) {
+                let type=$(el).find('div.type');
+                if (!$(type).find('strong div').length) {
+                    let buySell=$(type).find('> span').text().substring(0,1);
+                    $(type).find('strong').prepend('<div style="float: left; margin: 0; padding 0; font-size: x-small">('+buySell+')</div>');
+                }
+                $(type).on("mouseout",function() {
+                    removeTooltip();
+                });
+            });
 
             //move column
             // $(divPosition+' .edit-position').each(function(i, el) {
@@ -247,6 +260,21 @@ function setStyles() {
     $('div.position').css({
         "font-weight": "normal",
         "padding": "0px 0px 0px 0px"
+    });
+    $('div.net-pl').css({
+        'text-align': 'right'
+    });
+    $('div.value').css({
+        'text-align': 'right'
+    });
+    $('div.change').css({
+        'text-align': 'right'
+    });
+    $('div.adjustments').css({
+        'text-align': 'right'
+    });
+    $('div.premium').css({
+        'text-align': 'right'
     });
     $('div.position div.type span').css({
         "display": "none"
